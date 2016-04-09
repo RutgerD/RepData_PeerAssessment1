@@ -1,18 +1,8 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "RutgerD"
-date: "April 9 2016"
-output: 
-    html_document:
-      fig_caption: yes
-      highlight: zenburn
-      keep_md: yes
-      theme: united
----
+# Reproducible Research: Peer Assessment 1
+RutgerD  
+April 9 2016  
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ### *Introduction*
 This document contains a short analysis on data collected by a single individual during the months of October and November, 2012. During this period, the individual carried a personal activity monitoring device, and the dataset includes the number of steps taken in 5 minute intervals each day.
@@ -29,7 +19,8 @@ In this analysis, we will address the following points:
 A zip-file containing the data was obtained from the [Github repository](https://github.com/rdpeng/RepData_PeerAssessment1) of Dr. R.D. Peng. It was downloaded on 04-07-2016.
 
 Unless the dataset has already been read into the workspace, it may need to be unzipped and read into the workspace:
-```{r}
+
+```r
 if(!file.exists("./activity.csv")) {
     unzip("./repdata-data-activity.zip")
 }
@@ -42,16 +33,18 @@ The data does not need any preprocessing as it is tidy and clean. There are miss
 
 ### *What are the mean and median total number of steps taken per day?*
 These values will be calculated next. Any missing values will be not taken into account.
-```{r}
+
+```r
 sum.act <- aggregate(steps~date, act, sum, na.rm=TRUE)
 mean.act <- mean(sum.act$steps)         # mean total number of steps
 median.act <- median(sum.act$steps)     # median total number of steps
 ```
-The mean and median of the total number steps taken per day over the 61-day period, were `r format(mean.act, digits=6)` and `r format(median.act, digits=6)`, respectively.
+The mean and median of the total number steps taken per day over the 61-day period, were 10766.2 and 10765, respectively.
 
 
 The distribution of the number of daily steps can be visualized in the following histogram:
-```{r plot1}
+
+```r
 hist(sum.act$steps,
         breaks=22,
         xlab="Steps/Day",
@@ -60,9 +53,12 @@ hist(sum.act$steps,
         col="light grey")
 ```
 
+![](PA1_template_files/figure-html/plot1-1.png)<!-- -->
+
 ### *What is the average daily activity pattern?*
 Next, we are interested in the average daily activity pattern. This is best visualized by plotting the average number of steps taken per 5-minute interval, averaged across the whole 61-day period.
-```{r plot2}
+
+```r
 # Create mean for each interval across all days
 avg.act <- aggregate(steps~interval, act, mean, na.rm=TRUE)
 
@@ -80,26 +76,33 @@ plot(steps ~ interval1, data= avg.act,
      ylab="Average Number of Steps",
      main="5-Minute Average Number of Steps over a 61-day period",
      cex.main=0.9)
+```
+
+![](PA1_template_files/figure-html/plot2-1.png)<!-- -->
+
+```r
 # Maximum average number of steps taken
 max <- format(avg.act[which.max(avg.act$steps),][,2], digits=4)    # maximum
 max.int <- format(avg.act[which.max(avg.act$steps),][,3], "%H:%M") # interval of maximum
 ```
 
-The maximum average number of steps taken over the 61-day period was `r max`, at `r max.int`.
+The maximum average number of steps taken over the 61-day period was 206.2, at 08:35.
 
 
 ### *Imputing missing values*
-As mentioned above, there are quite some missing values in the dataset. More specifically, there are `r sum(is.na(act$steps))` missing values in the dataset. This represents `r format(mean(is.na(act$steps))*100, digits=3)` percent of the total.
+As mentioned above, there are quite some missing values in the dataset. More specifically, there are 2304 missing values in the dataset. This represents 13.1 percent of the total.
 
 It may be relevant to substitute these missing values by imputed values. One method of doing this is interpolating between existing values using the na.spline function from the "zoo" package, and generating a new dataset with with the interpolated values:
-```{r message=FALSE, warning=FALSE}
+
+```r
 require(zoo)
 # Make new dataset and replace NA values with interpolated values
 act1 <- act
 act1$steps<-na.spline(act1$steps)
 ```
 Again, the mean and median number of the total number of steps taken per day were calculated, this time using the dataset with the imputed values:
-```{r}
+
+```r
 sum.act1 <- aggregate(steps~date, act1, sum)
 mean.act1 <- mean(sum.act1$steps)
 median.act1 <- median(sum.act1$steps)
@@ -107,10 +110,11 @@ percent.increase.mean <- format(abs((mean.act1-mean.act)*100/mean.act), digits=3
 percent.increase.median <- format(abs((median.act1-median.act)*100/median.act), digits=3)
 ```
 
-For the dataset where missing data were filled in, the mean and median number of steps taken per day were `r format(mean.act1, digits=6)` and `r format(median.act1, digits=6)`, respectively. This represents a `r format(abs((mean.act1-mean.act)*100/mean.act), digits=3)` percent `r ifelse(((mean.act1-mean.act)<0), "decrease", "increase")` for the mean and a `r format(abs((median.act1-median.act)*100/median.act), digits=3)` percent `r ifelse(((median.act1-median.act)<0), "decrease", "increase")` for the median, respectively from the original data.
+For the dataset where missing data were filled in, the mean and median number of steps taken per day were 9349.04 and 10395, respectively. This represents a 13.2 percent decrease for the mean and a 3.44 percent decrease for the median, respectively from the original data.
 
 The distribution of number of daily steps is shown in the histogram below:
-```{r plot3}
+
+```r
 hist(sum.act1$steps,
         breaks=22,
         xlab="Steps/Day",
@@ -119,14 +123,24 @@ hist(sum.act1$steps,
         col="light grey")
 ```
 
+![](PA1_template_files/figure-html/plot3-1.png)<!-- -->
+
 When compared to Plot 1, it transpires that the missing values are essentially all replaced by zero, or a very low value by the interpolations. It unlikely that during these days there was no activity at all, and most likely the personal activity device way switched off during those days.  that the values are only missing during periods of very low activity.
 
 
 ### *Are there differences in activity patterns between weekdays and weekends?*
 A difference in activity pattern between weekdays and weekends would seem likely, but can it be inferred from the current activity dataset?
 In order to address this question, the dataset with the interpolated values for missing data was split into two: one for weekdays, and one for days of the weekend, and plots were created for both variables:
-```{r plot4, warning=FALSE, fig.width=12}
+
+```r
 Sys.setlocale("LC_ALL", "English")
+```
+
+```
+## [1] "LC_COLLATE=English_United States.1252;LC_CTYPE=English_United States.1252;LC_MONETARY=English_United States.1252;LC_NUMERIC=C;LC_TIME=English_United States.1252"
+```
+
+```r
 # Create a factor variable in the dataset with two levels - "weekday" and "weekend"
 act1$weekday <- as.factor(weekdays(as.Date(act1$date), abbreviate=TRUE))
 levels(act1$weekday)[levels(act1$weekday) == "Sun"] <- "weekend"
@@ -158,5 +172,7 @@ plot(steps ~ interval1,
       ylim=c(0,200),
       cex.main=0.9)
 ```
+
+![](PA1_template_files/figure-html/plot4-1.png)<!-- -->
 
 It is clear that the pattern is different on weekdays compared to weekends. In particular, the peak around 8:30 which is found during weekdays is absent in the weekend.
